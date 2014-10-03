@@ -234,7 +234,6 @@ public class Main extends SimpleApplication
         player.setWalkDirection(walkDirection);
         cam.setLocation(playerNode.getWorldTranslation().add(0, 3, 0));
         Vector3f camPoint = cam.getDirection();
-        System.out.println(camPoint.toString());
    
   }
 }
