@@ -83,10 +83,12 @@ class Game extends AbstractAppState implements ActionListener {
         initGeometries();
         initPlayer();
         initPhysics();
+        
+        // load level
         levelOne = main.getAssetManager().loadModel("Scenes/TestScene.j3o");
         levelOne.setName("Level");
         levelOne.setLocalScale(5f);
-        initLevel(levelOne);
+        loadLevel(levelOne);
     }
 
     public void onAction(String name, boolean isPressed, float tpf) {
@@ -197,7 +199,7 @@ class Game extends AbstractAppState implements ActionListener {
         bulletAppState.getPhysicsSpace().add(playerControl);
     }
     
-    public void initLevel(Spatial level) {
+    public void loadLevel(Spatial level) {
         CollisionShape sceneShape = CollisionShapeFactory.createMeshShape((Node) level);
         main.getRootNode().attachChild(level);
         RigidBodyControl landscape = new RigidBodyControl(sceneShape, 0);
