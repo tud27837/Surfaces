@@ -13,7 +13,7 @@ import java.awt.Toolkit;
 
 public class Main extends SimpleApplication {
 
-    public static Material gold, magenta;
+    public static Material gold, magenta, red, green, white;
 
     public static void main(String[] args) {
         AppSettings settings = new AppSettings(true);
@@ -72,6 +72,27 @@ public class Main extends SimpleApplication {
         magenta.setColor("Diffuse", ColorRGBA.Blue);
         magenta.setColor("Specular", ColorRGBA.Red);
         magenta.setFloat("Shininess", 2f); // shininess from 1-128
+        
+        red = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        red.setBoolean("UseMaterialColors", true);
+        red.setColor("Ambient", ColorRGBA.Red);
+        red.setColor("Diffuse", ColorRGBA.Red);
+        red.setColor("Specular", ColorRGBA.Red);
+        red.setFloat("Shininess", 2f);
+        
+        green = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        green.setBoolean("UseMaterialColors", true);
+        green.setColor("Ambient", ColorRGBA.Green);
+        green.setColor("Diffuse", ColorRGBA.Green);
+        green.setColor("Specular", ColorRGBA.Green);
+        green.setFloat("Shininess", 2f);
+        
+        white = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        white.setBoolean("UseMaterialColors", true);
+        white.setColor("Ambient", ColorRGBA.White);
+        white.setColor("Diffuse", ColorRGBA.White);
+        white.setColor("Specular", ColorRGBA.Gray);
+        white.setFloat("Shininess", 2f);
     }
 
     private void initGui() {

@@ -23,7 +23,6 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Cylinder;
 import com.jme3.scene.shape.Sphere;
 import com.jme3.system.AppSettings;
@@ -39,7 +38,7 @@ class Game extends AbstractAppState implements ActionListener {
     private BulletAppState bulletAppState;
     private CollisionControl collCon;
     private Spatial levelOne;
-    private Geometry geomBall, geomHoop;
+    private Geometry geomBall, geomHoop, geomHighGravSwitch, geomLowGravSwitch, geomNormGravSwitch, geomRevGravSwitch;
     private BitmapText completeText;
     private boolean goalReached;
     private Player player;
@@ -123,11 +122,6 @@ class Game extends AbstractAppState implements ActionListener {
     
     @Override
     public void update(float tpf) {
-        // end game
-        if (goalReached) {
-            main.getGuiNode().attachChild(completeText);
-        }
-        
         // walking
         Vector3f camDir = main.getCamera().getDirection().clone().multLocal(10f);
         camDir.setY(0);
@@ -147,6 +141,11 @@ class Game extends AbstractAppState implements ActionListener {
         }
         playerControl.setWalkDirection(walkDirection);
         main.getCamera().setLocation(player.getWorldTranslation().add(0, 3, 0));
+        
+        // end game
+        if (goalReached) {
+            main.getGuiNode().attachChild(completeText);
+        }
     }
 
     public void initGeometries() {
@@ -164,6 +163,30 @@ class Game extends AbstractAppState implements ActionListener {
         geomHoop.setLocalTranslation(-11.0f, 5.0f, 0.0f);
         geomHoop.rotate(0.0f, 90.0f * FastMath.DEG_TO_RAD, 0.0f);
         main.getRootNode().attachChild(geomHoop);
+        
+        // create high gravity switch
+        geomHighGravSwitch = new Geometry("HighGravSwitch", hoop);
+        geomHighGravSwitch.setMaterial(main.gold);
+        geomHighGravSwitch.setLocalTranslation(0.0f, 5.0f, -11.0f);
+        main.getRootNode().attachChild(geomHighGravSwitch);
+        
+        // create low gravity switch
+        geomLowGravSwitch = new Geometry("LowGravSwitch", hoop);
+        geomLowGravSwitch.setMaterial(main.red);
+        geomLowGravSwitch.setLocalTranslation(5.0f, 5.0f, -11.0f);
+        main.getRootNode().attachChild(geomLowGravSwitch);
+        
+        // create normal gravity switch
+        geomNormGravSwitch = new Geometry("NormGravSwitch", hoop);
+        geomNormGravSwitch.setMaterial(main.green);
+        geomNormGravSwitch.setLocalTranslation(10.0f, 5.0f, -11.0f);
+        main.getRootNode().attachChild(geomNormGravSwitch);
+        
+        // create reverse gravity switch
+        geomRevGravSwitch = new Geometry("RevGravSwitch", hoop);
+        geomRevGravSwitch.setMaterial(main.white);
+        geomRevGravSwitch.setLocalTranslation(15.0f, 5.0f, -11.0f);
+        main.getRootNode().attachChild(geomRevGravSwitch);
     }
 
     public void initPlayer() {
@@ -174,7 +197,6 @@ class Game extends AbstractAppState implements ActionListener {
     public void initPhysics() {
         bulletAppState = new BulletAppState();
         asm.attach(bulletAppState);
-        bulletAppState.getPhysicsSpace().setGravity(new Vector3f(0, -20, 0));
         bulletAppState.setDebugEnabled(true);
         
         // set ball physics
@@ -186,6 +208,26 @@ class Game extends AbstractAppState implements ActionListener {
         RigidBodyControl hoopPhys = new RigidBodyControl(0.0f);
         geomHoop.addControl(hoopPhys);
         bulletAppState.getPhysicsSpace().add(hoopPhys);
+        
+        // set high gravity switch physics
+        RigidBodyControl highGravSwitchPhys = new RigidBodyControl(0.0f);
+        geomHighGravSwitch.addControl(highGravSwitchPhys);
+        bulletAppState.getPhysicsSpace().add(highGravSwitchPhys);
+        
+        // set low gravity switch physics
+        RigidBodyControl lowGravSwitchPhys = new RigidBodyControl(0.0f);
+        geomLowGravSwitch.addControl(lowGravSwitchPhys);
+        bulletAppState.getPhysicsSpace().add(lowGravSwitchPhys);
+        
+        // set normal gravity switch physics
+        RigidBodyControl normGravSwitchPhys = new RigidBodyControl(0.0f);
+        geomNormGravSwitch.addControl(normGravSwitchPhys);
+        bulletAppState.getPhysicsSpace().add(normGravSwitchPhys);
+        
+        // set reverse gravity switch physics
+        RigidBodyControl revGravSwitchPhys = new RigidBodyControl(0.0f);
+        geomRevGravSwitch.addControl(revGravSwitchPhys);
+        bulletAppState.getPhysicsSpace().add(revGravSwitchPhys);
 
         // set collision control
         collCon = new CollisionControl(this);
@@ -194,7 +236,7 @@ class Game extends AbstractAppState implements ActionListener {
         // set player control and physics
         playerControl = new BetterCharacterControl(1.5f, 6f, 1f);
         player.addControl(playerControl);
-        playerControl.setJumpForce(new Vector3f(0, 12, 0));
+        playerControl.setJumpForce(new Vector3f(0, 10, 0));
         playerControl.setGravity(new Vector3f(0, 100, 0));
         bulletAppState.getPhysicsSpace().add(playerControl);
     }
