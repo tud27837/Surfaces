@@ -8,8 +8,10 @@ import com.jme3.app.Application;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.BetterCharacterControl;
+import com.jme3.bullet.control.GhostControl;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.font.BitmapFont;
@@ -17,12 +19,16 @@ import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.material.Material;
+import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
+import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Cylinder;
 import com.jme3.scene.shape.Sphere;
 import com.jme3.system.AppSettings;
@@ -32,13 +38,16 @@ import com.jme3.system.AppSettings;
  * @author Zack
  */
 class Game extends AbstractAppState implements ActionListener {
-    
+        
     private Main main;
     private AppStateManager asm;
     private BulletAppState bulletAppState;
     private CollisionControl collCon;
     private Spatial levelOne;
-    private Geometry geomBall, geomHoop, geomHighGravSwitch, geomLowGravSwitch, geomNormGravSwitch, geomRevGravSwitch;
+    private Geometry geomBall, geomHoop, geomHighGravSwitch, geomLowGravSwitch, geomNormGravSwitch, geomRevGravSwitch, geomGlassBox, geomNormCeilingGravSwitch, geomLavaBox;
+    private GhostControl lavaGhost;
+    private RigidBodyControl globalBallControl;
+    private Node lavaNode;
     private BitmapText completeText;
     private boolean goalReached;
     private Player player;
@@ -141,7 +150,6 @@ class Game extends AbstractAppState implements ActionListener {
         }
         playerControl.setWalkDirection(walkDirection);
         main.getCamera().setLocation(player.getWorldTranslation().add(0, 3, 0));
-        
         // end game
         if (goalReached) {
             main.getGuiNode().attachChild(completeText);
@@ -187,6 +195,33 @@ class Game extends AbstractAppState implements ActionListener {
         geomRevGravSwitch.setMaterial(main.white);
         geomRevGravSwitch.setLocalTranslation(15.0f, 5.0f, -11.0f);
         main.getRootNode().attachChild(geomRevGravSwitch);
+        
+        // create glass box that acts as a ceiling
+        geomGlassBox = new Geometry("GlassCeiling", new Box(90.0f,.2f,85.0f));
+        Material glassMat = new Material(main.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+        glassMat.setTexture("ColorMap", main.getAssetManager().loadTexture("Materials/glass.png"));
+        glassMat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
+        geomGlassBox.setQueueBucket(RenderQueue.Bucket.Transparent);
+        geomGlassBox.setLocalTranslation(new Vector3f(-10.0f,70.0f,10.0f));
+        geomGlassBox.setMaterial(glassMat);
+        main.getRootNode().attachChild(geomGlassBox);
+        
+        // create a block of lava over under the hole in the floor
+        lavaNode = new Node("Lava Node");
+        geomLavaBox = new Geometry("Lava", new Box(14,25,14));
+        Material lavaMat = new Material(main.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+        lavaMat.setTexture("ColorMap", main.getAssetManager().loadTexture("Materials/lava.jpg"));
+        geomLavaBox.setMaterial(lavaMat);
+        lavaNode.setLocalTranslation(new Vector3f(-88.0f, -25.0f,77.0f));
+        lavaNode.attachChild(geomLavaBox);
+        main.getRootNode().attachChild(lavaNode);
+        
+        // create normal gravity switch on ceiling in order to drop back down
+        geomNormCeilingGravSwitch = new Geometry("NormGravSwitch", hoop);
+        geomNormCeilingGravSwitch.setMaterial(main.green);
+        geomNormCeilingGravSwitch.setLocalTranslation(10.0f, 67.0f, -11.0f);
+        main.getRootNode().attachChild(geomNormCeilingGravSwitch);
+        
     }
 
     public void initPlayer() {
@@ -201,6 +236,7 @@ class Game extends AbstractAppState implements ActionListener {
         
         // set ball physics
         RigidBodyControl ballPhys = new RigidBodyControl(1.0f);
+        globalBallControl = ballPhys;
         geomBall.addControl(ballPhys);
         bulletAppState.getPhysicsSpace().add(ballPhys);
         
@@ -228,7 +264,22 @@ class Game extends AbstractAppState implements ActionListener {
         RigidBodyControl revGravSwitchPhys = new RigidBodyControl(0.0f);
         geomRevGravSwitch.addControl(revGravSwitchPhys);
         bulletAppState.getPhysicsSpace().add(revGravSwitchPhys);
-
+        
+        // make glass solid
+        RigidBodyControl glassCeiling = new RigidBodyControl(0.0f);
+        geomGlassBox.addControl(glassCeiling);
+        bulletAppState.getPhysicsSpace().add(glassCeiling);
+        
+        // set normal gravity switch physics on the ceiling
+        RigidBodyControl normCeilingGravSwitchPhys = new RigidBodyControl(0.0f);
+        geomNormCeilingGravSwitch.addControl(normCeilingGravSwitchPhys);
+        bulletAppState.getPhysicsSpace().add(normCeilingGravSwitchPhys);
+        
+        lavaGhost = new GhostControl(new BoxCollisionShape(new Vector3f(14,25,14)));  // a box-shaped ghost
+        lavaNode.addControl(lavaGhost); 
+        main.getRootNode().attachChild(lavaNode);
+        bulletAppState.getPhysicsSpace().add(lavaGhost);
+        
         // set collision control
         collCon = new CollisionControl(this);
         bulletAppState.getPhysicsSpace().addCollisionListener(collCon);
@@ -239,6 +290,10 @@ class Game extends AbstractAppState implements ActionListener {
         playerControl.setJumpForce(new Vector3f(0, 10, 0));
         playerControl.setGravity(new Vector3f(0, 100, 0));
         bulletAppState.getPhysicsSpace().add(playerControl);
+    }
+    
+    public GhostControl getLavaGhost(){
+        return lavaGhost;
     }
     
     public void loadLevel(Spatial level) {
@@ -267,5 +322,13 @@ class Game extends AbstractAppState implements ActionListener {
     
     public Player getPlayer() {
         return player;
+    }
+    
+    public BetterCharacterControl getPlayerControl(){
+        return playerControl;
+    }
+    
+    public RigidBodyControl getBallControl(){
+        return globalBallControl;
     }
 }
