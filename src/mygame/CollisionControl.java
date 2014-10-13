@@ -16,12 +16,22 @@ import com.jme3.math.Vector3f;
 public class CollisionControl extends RigidBodyControl implements PhysicsCollisionListener {
 
     private Game game;
-
+    private boolean playerOutOfLava = false, ballOutOfLava = false;
     public CollisionControl(Game game) {
         this.game = game;
     }
 
     public void collision(PhysicsCollisionEvent event) {
+        
+        if(playerOutOfLava){
+            game.getPlayerControl().setGravity(new Vector3f(0.0f, -9.81f, 0.0f));
+            playerOutOfLava = false;
+        }
+        if(ballOutOfLava){
+            game.getBallControl().setGravity(new Vector3f(0.0f, -9.81f, 0.0f));
+            ballOutOfLava = false;
+        }
+        
         if (event.getNodeA().getName().equals("Ball") || event.getNodeB().getName().equals("Ball")) {
             // finish hoop
             if (event.getNodeA().getName().equals("Hoop") || event.getNodeB().getName().equals("Hoop")) {
@@ -43,6 +53,18 @@ public class CollisionControl extends RigidBodyControl implements PhysicsCollisi
             // reverse gravity switch
             if (event.getNodeA().getName().equals("RevGravSwitch") || event.getNodeB().getName().equals("RevGravSwitch")) {
                 game.getBulletAppState().getPhysicsSpace().setGravity(new Vector3f(0.0f, 9.81f, 0.0f));
+            }
+            
+            if (event.getNodeA().getName().equals("Lava Node") || event.getNodeB().getName().equals("Lava Node")) {
+                game.getBallControl().setGravity(new Vector3f(0.0f, -1.0f, 0.0f));
+                ballOutOfLava = true;
+            }
+        }
+        
+        if (event.getNodeA().getName().equals("Player") || event.getNodeB().getName().equals("Player")) {
+            if (event.getNodeA().getName().equals("Lava Node") || event.getNodeB().getName().equals("Lava Node")) {
+                game.getPlayerControl().setGravity(new Vector3f(0.0f, -1.0f, 0.0f));
+                playerOutOfLava = true;
             }
         }
     }
