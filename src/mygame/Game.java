@@ -34,31 +34,99 @@ import com.jme3.scene.shape.Sphere;
 import com.jme3.system.AppSettings;
 
 /**
- *
- * @author Zack
+ * Spawns the player, ball, goal hoop, switches, surfaces, and level. Contains 
+ * game logic and states.
+ * 
+ * @author Zack Hunter
+ * @author Jake DiIenno
+ * @author Eric Bullock
+ * @author Michael Fatal
+ * @version %I% %G%
+ * @see AbstractAppState
+ * @since 2.0
  */
 class Game extends AbstractAppState implements ActionListener {
-        
+    
+   /**
+    * copy of main class
+    */
     private Main main;
+   /**
+    * copy of state manager
+    */
     private AppStateManager asm;
+   /**
+    * the bullet physics engine
+    */
     private BulletAppState bulletAppState;
+   /**
+    * collision control to detect physical collisions
+    */
     private CollisionControl collCon;
+   /**
+    * Spatial for the first level
+    */
     private Spatial levelOne;
+   /**
+    * Geometries for all
+    */
     private Geometry geomBall, geomHoop, geomHighGravSwitch, geomLowGravSwitch, geomNormGravSwitch, geomRevGravSwitch, geomGlassBox, geomNormCeilingGravSwitch, geomLavaBox;
+   /**
+    * GhostControl to detect collisions with the lava block
+    */
     private GhostControl lavaGhost;
+   /**
+    * physics of the ball Geometry
+    */
     private RigidBodyControl globalBallControl;
+   /**
+    * Node for the lava block
+    */
     private Node lavaNode;
+   /**
+    * text object for the display of text when the level is complete
+    */
     private BitmapText completeText;
+   /**
+    * boolean for whether the goal has been reached or not
+    */
     private boolean goalReached;
+   /**
+    * Player object containing information about the player
+    */
     private Player player;
+   /**
+    * BetterCharacterControl object to control the player
+    */
     private BetterCharacterControl playerControl;
+   /**
+    * direction the player is walking in a Vector3f
+    */
     private Vector3f walkDirection = new Vector3f();
+   /**
+    * booleans for the direction the play is walking
+    */
     private boolean left = false, right = false, up = false, down = false;
     // states
+   /**
+    * the current state
+    */
     private int state;
+   /**
+    * waiting for the game to start
+    */
     private final int WAIT = 0;
+   /**
+    * the game is running
+    */
     private final int RUNNING = 1;
+   /**
+    * the game is paused
+    */
     private final int PAUSED = 2;
+   /**
+    * the game has ended
+    */
     private final int END = 3;
     
     @Override
@@ -99,6 +167,14 @@ class Game extends AbstractAppState implements ActionListener {
         loadLevel(levelOne);
     }
 
+   /**
+    * Determine what happens when a registered key is pressed. Controls player
+    * movement.
+    * 
+    * @param name a String for the name given to the key pressed
+    * @param isPressed a boolean to determine if a key is pressed
+    * @param tpf a float containing the time per frame 
+    */
     public void onAction(String name, boolean isPressed, float tpf) {
         if (name.equals("Left")) {
             if (isPressed) {
@@ -156,6 +232,10 @@ class Game extends AbstractAppState implements ActionListener {
         }
     }
 
+   /**
+    * Initialize general geometries for game elements. Creates ball, hoop, 
+    * gravity switches, lava block, and glass ceiling.
+    */
     public void initGeometries() {
         // create ball
         Sphere ball = new Sphere(20, 20, 1.0f);
@@ -224,11 +304,23 @@ class Game extends AbstractAppState implements ActionListener {
         
     }
 
+   /**
+    * Initialize the player using the Player class and add it to the root node.
+    * 
+    * @see Player
+    */
     public void initPlayer() {
         player = new Player(this);
         main.getRootNode().attachChild(player);
     }
     
+   /**
+    * Initialize the bullet physics engine and all physical elements. Starts 
+    * the bullet engine and adds appropriate physics to each geometry.
+    * 
+    * @see com.jme3.bullet.control.RigidBodyControl
+    * @see com.jme3.bullet.BulletAppState
+    */
     public void initPhysics() {
         bulletAppState = new BulletAppState();
         asm.attach(bulletAppState);
@@ -292,10 +384,20 @@ class Game extends AbstractAppState implements ActionListener {
         bulletAppState.getPhysicsSpace().add(playerControl);
     }
     
+   /**
+    * Returns the GhostControl object for the lava block.
+    * 
+    * @return the GhostControl object for the lava block
+    */
     public GhostControl getLavaGhost(){
         return lavaGhost;
     }
     
+   /**
+    * Creates physics for a level and attaches the level to the root node.
+    * 
+    * @param level the Spacial for the level to be loaded
+    */
     public void loadLevel(Spatial level) {
         CollisionShape sceneShape = CollisionShapeFactory.createMeshShape((Node) level);
         main.getRootNode().attachChild(level);
@@ -304,30 +406,61 @@ class Game extends AbstractAppState implements ActionListener {
         bulletAppState.getPhysicsSpace().add(landscape);
     }
     
+   /**
+    * Returns true if the goal is reached, false if it is not.
+    * 
+    * @return boolean for whether or not the goal has been reached
+    */
     public boolean isGoalReached() {
         return goalReached;
     }
     
+   /**
+    * Sets the goalReached boolean to true.
+    */
     public void goalReached() {
         goalReached = true;
     }
     
+   /**
+    * Returns the current instance of Main.
+    * 
+    * @return the Main currently used
+    */
     public Main getMain() {
         return main;
     }
 
+   /**
+    * Returns the bulletAppState
+    * 
+    * @return the instance of the bullet engine in use
+    */
     public BulletAppState getBulletAppState() {
         return bulletAppState;
     }
     
+   /**
+    * Returns the Player class object.
+    * 
+    * @return the Player class object
+    */
     public Player getPlayer() {
         return player;
     }
     
+   /**
+    * Returns the playerControl object
+    * @return the BetterCharacterControl object for the player
+    */
     public BetterCharacterControl getPlayerControl(){
         return playerControl;
     }
     
+   /**
+    * Returns the physics of the ball.
+    * @return the RigidBodyControl of the ball Geometry
+    */
     public RigidBodyControl getBallControl(){
         return globalBallControl;
     }
