@@ -17,15 +17,38 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.system.AppSettings;
 
 /**
- *
- * @author Zack
+ * Displays the title of the game. Allows player to start the game.
+ * 
+ * @author Zack Hunter
+ * @version %I% %G%
+ * @since 2.0
  */
 public class StartScreen extends AbstractAppState implements ActionListener {
 
+   /**
+    * copy of main class
+    */
     private Main main;
+   /**
+    * copy of state manager
+    */
     private AppStateManager asm;
-    private BitmapText titleText, startText;
+   /**
+    * text object for the display of the title
+    */
+    private BitmapText titleText;
+   /**
+    * text object for the display of the start help text
+    */
+    private BitmapText startText;
 
+   /**
+    * Determine what happens when a registered key is pressed.
+    * 
+    * @param name a String for the name given to the key pressed
+    * @param isPressed a boolean to determine if a key is pressed
+    * @param tpf a float containing the time per frame
+    */
     public void onAction(String name, boolean isPressed, float tpf) {
         if (isPressed) {
             if (name.equals("Quit")) {
@@ -39,6 +62,11 @@ public class StartScreen extends AbstractAppState implements ActionListener {
         }
     }
 
+    /**
+     *
+     * @param stateManager
+     * @param app
+     */
     @Override
     public void initialize(AppStateManager stateManager, Application app) {
         main = (Main) app;
@@ -70,6 +98,9 @@ public class StartScreen extends AbstractAppState implements ActionListener {
         inputManager.addListener(this, "Quit", "Start");
     }
     
+   /**
+    * Perform a hard quit from the program.
+    */
     public void quitGame() {
         System.exit(0);
     }

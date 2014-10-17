@@ -11,10 +11,43 @@ import com.jme3.system.AppSettings;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 
+/**
+ * Main class of the project. Initializes basic elements, creates and starts a 
+ * simple app, and starts the game.
+ * 
+ * @author Zack Hunter
+ * @version %I% %G%
+ * @see SimpleApplication
+ * @since 1.0
+ */
 public class Main extends SimpleApplication {
 
-    public static Material gold, magenta, red, green, white;
+   /**
+    * gold colored material. Can be applied to many geometries.
+    */
+    public static Material gold;
+    /**
+    * magenta colored material. Can be applied to many geometries.
+    */
+    public static Material magenta;
+    /**
+    * red colored material. Can be applied to many geometries.
+    */
+    public static Material red;
+    /**
+    * green colored material. Can be applied to many geometries.
+    */
+    public static Material green;
+    /**
+    * white colored material. Can be applied to many geometries.
+    */
+    public static Material white;
 
+   /**
+    * Main method of the project. Sets up the app.
+    * 
+    * @param args array of Strings containing default arguments
+    */
     public static void main(String[] args) {
         AppSettings settings = new AppSettings(true);
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
@@ -28,10 +61,18 @@ public class Main extends SimpleApplication {
         app.start();
     }
     
+   /**
+    * Returns the settings object of the current app.
+    * 
+    * @return an AppSettings object containing the settings of the app
+    */
     public AppSettings getSettings() {
         return (settings);
     }
 
+    /**
+     *
+     */
     @Override
     public void simpleInitApp() {
         initMaterials();
@@ -45,11 +86,21 @@ public class Main extends SimpleApplication {
         stateManager.attach(s);
     }
 
+   /**
+    * Detaches all children from both the rootNode and the guiNode of the Main m 
+    * argument.
+    * 
+    * @param m a Main class instance
+    */
     protected static void clearJMonkey(Main m) {
         m.guiNode.detachAllChildren();
         m.rootNode.detachAllChildren();
     }
     
+    /**
+     *
+     * @param tpf
+     */
     @Override
     public void simpleUpdate(float tpf) {
         // nothing
@@ -58,6 +109,12 @@ public class Main extends SimpleApplication {
     // -------------------------------------------------------------------------
     // Initialization Methods
     // -------------------------------------------------------------------------
+   /**
+    * Initialize all materials to be used throughout the project. The individual
+    * materials are stored in public global variables in this class
+    * 
+    * @see Material
+    */
     private void initMaterials() {
         gold = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         gold.setBoolean("UseMaterialColors", true);
@@ -95,11 +152,22 @@ public class Main extends SimpleApplication {
         white.setFloat("Shininess", 2f);
     }
 
+   /**
+    * Initialize aspects of the GUI. Sets to display the frames per second and 
+    * hide other stats.
+    * 
+    * @see SimpleApplication#setDisplayFps(boolean) 
+    * @see SimpleApplication#setDisplayStatView(boolean) 
+    */
     private void initGui() {
         setDisplayFps(true);
         setDisplayStatView(false);
     }
 
+   /**
+    * Initialize light elements and shadow elements. Add them to the root 
+    * node and view port, respectively.
+    */
     private void initLightandShadow() {
         // Light 1: white, directional
         DirectionalLight sun1 = new DirectionalLight();
@@ -126,6 +194,14 @@ public class Main extends SimpleApplication {
         viewPort.addProcessor(dlsr);
     }
 
+   /**
+    * Initialize elements affecting the state of the camera. Set the camera's 
+    * starting position, move speed, and look direction as well as the background 
+    * color of the scene.
+    * 
+    * @see SimpleApplication#cam
+    * @see SimpleApplication#flyCam
+    */
     private void initCam() {
         flyCam.setEnabled(true);
         flyCam.setMoveSpeed(100f);
