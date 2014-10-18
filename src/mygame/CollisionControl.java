@@ -10,19 +10,43 @@ import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.math.Vector3f;
 
 /**
- *
- * @author tuc53509
+ * Detects collisions between physical objects.
+ * 
+ * @author Zack Hunter
+ * @author Eric Bullock
+ * @version %I% %G%
+ * @see PhysicsCollisionListener
  */
 public class CollisionControl extends RigidBodyControl implements PhysicsCollisionListener {
 
+   /**
+    * copy of current Game object
+    */
     private Game game;
-    private boolean playerOutOfLava = false, ballOutOfLava = false;
+   /**
+    * boolean for if the player is out of the lava or not
+    */
+    private boolean playerOutOfLava = false;
+   /**
+    * boolean for if the ball is out of the lava or not
+    */
+    private boolean ballOutOfLava = false;
+    
+   /**
+    * Constructor. Copies <code>game</code> object.
+    * @param game instance of the current game
+    */
     public CollisionControl(Game game) {
         this.game = game;
     }
 
+   /**
+    * Detects collision between two physical objects.
+    * 
+    * @param event PhysicsCollisionEvent containing properties about the collision 
+    *              including names, speed, etc.
+    */
     public void collision(PhysicsCollisionEvent event) {
-        
         if(playerOutOfLava){
             game.getPlayerControl().setGravity(new Vector3f(0.0f, -9.81f, 0.0f));
             playerOutOfLava = false;
