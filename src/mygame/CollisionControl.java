@@ -23,14 +23,6 @@ public class CollisionControl extends RigidBodyControl implements PhysicsCollisi
     * copy of current Game object
     */
     private Game game;
-   /**
-    * boolean for if the player is out of the lava or not
-    */
-    private boolean playerOutOfLava = false;
-   /**
-    * boolean for if the ball is out of the lava or not
-    */
-    private boolean ballOutOfLava = false;
     
    /**
     * Constructor. Copies <code>game</code> object.
@@ -47,13 +39,13 @@ public class CollisionControl extends RigidBodyControl implements PhysicsCollisi
     *              including names, speed, etc.
     */
     public void collision(PhysicsCollisionEvent event) {
-        if(playerOutOfLava){
-            game.getPlayerControl().setGravity(new Vector3f(0.0f, -9.81f, 0.0f));
-            playerOutOfLava = false;
-        }
-        if(ballOutOfLava){
-            game.getBallControl().setGravity(new Vector3f(0.0f, -9.81f, 0.0f));
-            ballOutOfLava = false;
+        if (event.getNodeA().getName().equals("Lava") || event.getNodeB().getName().equals("Lava")) {
+            if (event.getNodeA().getName().equals("Player") || event.getNodeB().getName().equals("Player")) {
+                game.resetLevel();
+            }
+            if (event.getNodeA().getName().equals("Ball") || event.getNodeB().getName().equals("Ball")) {
+                game.resetLevel();
+            }
         }
         
         if (event.getNodeA().getName().equals("Ball") || event.getNodeB().getName().equals("Ball")) {
@@ -77,18 +69,6 @@ public class CollisionControl extends RigidBodyControl implements PhysicsCollisi
             // reverse gravity switch
             if (event.getNodeA().getName().equals("RevGravSwitch") || event.getNodeB().getName().equals("RevGravSwitch")) {
                 game.getBulletAppState().getPhysicsSpace().setGravity(new Vector3f(0.0f, 9.81f, 0.0f));
-            }
-            
-            if (event.getNodeA().getName().equals("Lava Node") || event.getNodeB().getName().equals("Lava Node")) {
-                game.getBallControl().setGravity(new Vector3f(0.0f, -1.0f, 0.0f));
-                ballOutOfLava = true;
-            }
-        }
-        
-        if (event.getNodeA().getName().equals("Player") || event.getNodeB().getName().equals("Player")) {
-            if (event.getNodeA().getName().equals("Lava Node") || event.getNodeB().getName().equals("Lava Node")) {
-                game.getPlayerControl().setGravity(new Vector3f(0.0f, -1.0f, 0.0f));
-                playerOutOfLava = true;
             }
         }
     }
