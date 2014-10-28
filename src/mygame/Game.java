@@ -8,7 +8,6 @@ import com.jme3.app.Application;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.bullet.BulletAppState;
-import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.BetterCharacterControl;
 import com.jme3.bullet.control.GhostControl;
@@ -66,7 +65,7 @@ class Game extends AbstractAppState implements ActionListener {
    /**
     * Spatial for the first level
     */
-    private Spatial levelOne;
+    private Level level;
    /**
     * Geometries for all
     */
@@ -78,7 +77,7 @@ class Game extends AbstractAppState implements ActionListener {
    /**
     * physics of the ball Geometry
     */
-    private RigidBodyControl globalBallControl;
+    private RigidBodyControl ballPhys;
    /**
     * Node for the lava block
     */
@@ -95,10 +94,6 @@ class Game extends AbstractAppState implements ActionListener {
     * Player object containing information about the player
     */
     private Player player;
-   /**
-    * BetterCharacterControl object to control the player
-    */
-    private BetterCharacterControl playerControl;
    /**
     * direction the player is walking in a Vector3f
     */
@@ -157,14 +152,11 @@ class Game extends AbstractAppState implements ActionListener {
         
         // inits
         initGeometries();
-        initPlayer();
         initPhysics();
+        initPlayer();
         
-        // load level
-        levelOne = main.getAssetManager().loadModel("Scenes/TestScene.j3o");
-        levelOne.setName("Level");
-        levelOne.setLocalScale(5f);
-        loadLevel(levelOne);
+        // load first level
+        level = new Level(this);
     }
 
    /**
@@ -201,7 +193,7 @@ class Game extends AbstractAppState implements ActionListener {
                 down = false;
             }
         } else if (name.equals("Jump")) {
-            playerControl.jump();
+            player.getControl().jump();
         }
    }
     
@@ -224,8 +216,9 @@ class Game extends AbstractAppState implements ActionListener {
         if (down) {
             walkDirection.addLocal(camDir.negate());
         }
-        playerControl.setWalkDirection(walkDirection);
+        player.getControl().setWalkDirection(walkDirection);
         main.getCamera().setLocation(player.getWorldTranslation().add(0, 3, 0));
+        
         // end game
         if (goalReached) {
             main.getGuiNode().attachChild(completeText);
@@ -241,7 +234,6 @@ class Game extends AbstractAppState implements ActionListener {
         Sphere ball = new Sphere(20, 20, 1.0f);
         geomBall = new Geometry("Ball", ball);
         geomBall.setMaterial(main.gold);
-        geomBall.setLocalTranslation(0.0f, 5.0f, 10.0f);
         main.getRootNode().attachChild(geomBall);
         
         // create hoop
@@ -287,14 +279,12 @@ class Game extends AbstractAppState implements ActionListener {
         main.getRootNode().attachChild(geomGlassBox);
         
         // create a block of lava over under the hole in the floor
-        lavaNode = new Node("Lava Node");
         geomLavaBox = new Geometry("Lava", new Box(14,25,14));
         Material lavaMat = new Material(main.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
         lavaMat.setTexture("ColorMap", main.getAssetManager().loadTexture("Materials/lava.jpg"));
         geomLavaBox.setMaterial(lavaMat);
-        lavaNode.setLocalTranslation(new Vector3f(-88.0f, -25.0f,77.0f));
-        lavaNode.attachChild(geomLavaBox);
-        main.getRootNode().attachChild(lavaNode);
+        geomLavaBox.setLocalTranslation(new Vector3f(-88.0f, -25.0f,77.0f));
+        main.getRootNode().attachChild(geomLavaBox);
         
         // create normal gravity switch on ceiling in order to drop back down
         geomNormCeilingGravSwitch = new Geometry("NormGravSwitch", hoop);
@@ -327,8 +317,7 @@ class Game extends AbstractAppState implements ActionListener {
         bulletAppState.setDebugEnabled(true);
         
         // set ball physics
-        RigidBodyControl ballPhys = new RigidBodyControl(1.0f);
-        globalBallControl = ballPhys;
+        ballPhys = new RigidBodyControl(1.0f);
         geomBall.addControl(ballPhys);
         bulletAppState.getPhysicsSpace().add(ballPhys);
         
@@ -367,21 +356,14 @@ class Game extends AbstractAppState implements ActionListener {
         geomNormCeilingGravSwitch.addControl(normCeilingGravSwitchPhys);
         bulletAppState.getPhysicsSpace().add(normCeilingGravSwitchPhys);
         
-        lavaGhost = new GhostControl(new BoxCollisionShape(new Vector3f(14,25,14)));  // a box-shaped ghost
-        lavaNode.addControl(lavaGhost); 
-        main.getRootNode().attachChild(lavaNode);
-        bulletAppState.getPhysicsSpace().add(lavaGhost);
+        // set lava box physics
+        RigidBodyControl lavaPhys = new RigidBodyControl(0.0f);
+        geomLavaBox.addControl(lavaPhys);
+        bulletAppState.getPhysicsSpace().add(geomLavaBox);
         
         // set collision control
         collCon = new CollisionControl(this);
         bulletAppState.getPhysicsSpace().addCollisionListener(collCon);
-        
-        // set player control and physics
-        playerControl = new BetterCharacterControl(1.5f, 6f, 1f);
-        player.addControl(playerControl);
-        playerControl.setJumpForce(new Vector3f(0, 10, 0));
-        playerControl.setGravity(new Vector3f(0, 100, 0));
-        bulletAppState.getPhysicsSpace().add(playerControl);
     }
     
    /**
@@ -391,19 +373,6 @@ class Game extends AbstractAppState implements ActionListener {
     */
     public GhostControl getLavaGhost(){
         return lavaGhost;
-    }
-    
-   /**
-    * Creates physics for a level and attaches the level to the root node.
-    * 
-    * @param level the Spacial for the level to be loaded
-    */
-    public void loadLevel(Spatial level) {
-        CollisionShape sceneShape = CollisionShapeFactory.createMeshShape((Node) level);
-        main.getRootNode().attachChild(level);
-        RigidBodyControl landscape = new RigidBodyControl(sceneShape, 0);
-        level.addControl(landscape);
-        bulletAppState.getPhysicsSpace().add(landscape);
     }
     
    /**
@@ -449,19 +418,21 @@ class Game extends AbstractAppState implements ActionListener {
         return player;
     }
     
-   /**
-    * Returns the playerControl object
-    * @return the BetterCharacterControl object for the player
-    */
-    public BetterCharacterControl getPlayerControl(){
-        return playerControl;
+    public RigidBodyControl getBall() {
+        return ballPhys;
     }
     
    /**
-    * Returns the physics of the ball.
-    * @return the RigidBodyControl of the ball Geometry
+    * Resets all elements of the level to starting positions
     */
-    public RigidBodyControl getBallControl(){
-        return globalBallControl;
+    public void resetLevel() {
+        // reset player
+        player.reset();
+        // reset ball
+        ballPhys.setPhysicsLocation(new Vector3f(level.getBallStart()));
+        ballPhys.setLinearVelocity(Vector3f.ZERO);
+        ballPhys.setAngularVelocity(Vector3f.ZERO);
+        // reset normal gravity
+        bulletAppState.getPhysicsSpace().setGravity(new Vector3f(0, -9.81f, 0));
     }
 }
