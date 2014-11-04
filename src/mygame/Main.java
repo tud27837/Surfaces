@@ -42,6 +42,10 @@ public class Main extends SimpleApplication {
     * white colored material. Can be applied to many geometries.
     */
     public static Material white;
+    /**
+    * yellow colored material. Can be applied to many geometries.
+    */
+    public static Material yellow;
 
    /**
     * Main method of the project. Sets up the app.
@@ -150,6 +154,13 @@ public class Main extends SimpleApplication {
         white.setColor("Diffuse", ColorRGBA.White);
         white.setColor("Specular", ColorRGBA.Gray);
         white.setFloat("Shininess", 2f);
+        
+        yellow =  new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        yellow.setBoolean("UseMaterialColors", true);
+        yellow.setColor("Ambient", new ColorRGBA(255,255,0,0));
+        yellow.setColor("Diffuse", new ColorRGBA(255,255,0,0));
+        yellow.setColor("Specular", new ColorRGBA(255,255,0,0));
+        yellow.setFloat("Shininess", 2f);
     }
 
    /**
