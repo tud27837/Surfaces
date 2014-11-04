@@ -210,6 +210,7 @@ public class Level {
         geomSurfUp.setMaterial(game.getMain().white);
         geomSurfUp.setLocalTranslation(new Vector3f(-15f,12f,69f));
         nodeUpDown.attachChild(geomSurfUp);
+        game.getMain().getRootNode().attachChild(nodeUpDown);
         RigidBodyControl surfUpPhysics = new RigidBodyControl(0.0f);
         geomSurfUp.addControl(surfUpPhysics);
         game.getBulletAppState().getPhysicsSpace().add(surfUpPhysics);
