@@ -30,9 +30,10 @@ public class Level {
     private int levelNum;
     private int listIndex = 0;
     private Node nodeUp, nodeDown, nodeUpDown;
+    private Surface upDownBlock;
     private Vector3f playerStartPos, ballStartPos;
     private Geometry geomHoop, geomHighGravSwitch, geomLowGravSwitch, geomNormGravSwitch, geomRevGravSwitch, geomGlassBox, geomLavaBox, geomSurfUp, geomSurfDown;
-    private RigidBodyControl landscape, hoopPhys, highGravSwitchPhys, lowGravSwitchPhys, normGravSwitchPhys, revGravSwitchPhys, glassPhys, lavaPhys;
+    private RigidBodyControl landscape, hoopPhys, highGravSwitchPhys, lowGravSwitchPhys, normGravSwitchPhys, revGravSwitchPhys, glassPhys, lavaPhys, surfPhysics;
     private final Cylinder hoop = new Cylinder(30, 30, 1.5f, 0.1f, true);
     private ArrayList<RigidBodyControl> physList = new ArrayList<RigidBodyControl>();
     private ArrayList<Geometry> geomList = new ArrayList<Geometry>();
@@ -205,17 +206,26 @@ public class Level {
         game.getBulletAppState().getPhysicsSpace().add(geomLavaBox);
     }
     
-    public void createUpDownBlock(/*float l, float h, float w, float x, float y, float z*/){
-        geomSurfUp = new Geometry("SurfUp", new Box(5f, .5f, 2f));
-        geomSurfUp.setMaterial(game.getMain().white);
-        geomSurfUp.setLocalTranslation(new Vector3f(-15f,12f,69f));
-        nodeUpDown.attachChild(geomSurfUp);
-        game.getMain().getRootNode().attachChild(nodeUpDown);
-        RigidBodyControl surfUpPhysics = new RigidBodyControl(0.0f);
-        geomSurfUp.addControl(surfUpPhysics);
-        game.getBulletAppState().getPhysicsSpace().add(surfUpPhysics);
+    public void createUpDownBlock(){
+        upDownBlock = new Surface(game);
+        upDownBlock.setLocalTranslation(new Vector3f(-15f,12f,69f));
+        game.getMain().getRootNode().attachChild(upDownBlock);
+        CollisionShape surfaceShape =
+            CollisionShapeFactory.createMeshShape((Node) upDownBlock);
+        surfPhysics = new RigidBodyControl(surfaceShape, 0);
+        upDownBlock.addControl(surfPhysics);
+        game.getBulletAppState().getPhysicsSpace().add(surfPhysics);
     }
     
+    public void moveSurfaceUp(){
+        upDownBlock.move(0f, 1f, 0f);
+        surfPhysics.setPhysicsLocation(new Vector3f(-15f,13f,69f));
+    }
+    
+    public void moveSurfaceDown(){
+        upDownBlock.move(0f, -1f, 0f);
+        surfPhysics.setPhysicsLocation(new Vector3f(-15f,12f,69f));
+    }
     //still in development don't use
     /*public void createUpBlock(float l, float h, float w, float x, float y, float z){
         geomSurfUp = new Geometry("SurfUp", new Box(5f, .1f, 2f));
@@ -251,7 +261,7 @@ public class Level {
     }
     
     public Node getUpDownNode(){
-        return nodeUpDown;
+        return upDownBlock;
     }
     
     public Geometry getUpGeom(){

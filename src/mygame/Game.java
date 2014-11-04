@@ -235,8 +235,7 @@ class Game extends AbstractAppState implements ActionListener {
         if(shiftUp)                            //Here
         {   
             shiftUp = false;
-            level.getUpDownNode().move(0f, 1f, 0f);
-            level.getUpGeom().getControl(RigidBodyControl.class).setPhysicsLocation(new Vector3f(-15f,13f,69f));
+            level.moveSurfaceUp();
             
         }
         
@@ -244,8 +243,7 @@ class Game extends AbstractAppState implements ActionListener {
         if(shiftDown)
         {
             shiftDown = false;
-            level.getUpDownNode().move(0,-1f,0);
-            level.getUpGeom().getControl(RigidBodyControl.class).setPhysicsLocation(new Vector3f(-15f,12f,69f));
+            level.moveSurfaceDown();
             
         }
         // end game
