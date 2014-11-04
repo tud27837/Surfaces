@@ -101,12 +101,16 @@ class Game extends AbstractAppState implements ActionListener {
    /**
     * booleans for the direction the play is walking
     */
-    private boolean left = false, right = false, up = false, down = false;
+    private boolean left = false, right = false, up = false, down = false, shiftUp=false, shiftDown=false;
     // states
    /**
     * the current state
     */
     private int state;
+    /*
+     *counter variable to only call level.nextLevel once
+     */
+    private int count = 0;
    /**
     * waiting for the game to start
     */
@@ -137,8 +141,9 @@ class Game extends AbstractAppState implements ActionListener {
         main.getInputManager().addMapping("Up", new KeyTrigger(KeyInput.KEY_W), new KeyTrigger(KeyInput.KEY_UP));
         main.getInputManager().addMapping("Down", new KeyTrigger(KeyInput.KEY_S), new KeyTrigger(KeyInput.KEY_DOWN));
         main.getInputManager().addMapping("Jump", new KeyTrigger(KeyInput.KEY_SPACE));
-        main.getInputManager().addListener(this, "Left", "Right", "Up", "Down", "Jump");
-        
+        main.getInputManager().addMapping("ShiftUp", new KeyTrigger(KeyInput.KEY_Q));
+        main.getInputManager().addMapping("ShiftDown", new KeyTrigger(KeyInput.KEY_E));
+        main.getInputManager().addListener(this, "Left", "Right", "Up", "Down", "Jump", "ShiftUp", "ShiftDown");
         // text
         main.getGuiNode().detachAllChildren();
         BitmapFont bmf = main.getAssetManager().loadFont("Interface/Fonts/Default.fnt");
@@ -195,6 +200,15 @@ class Game extends AbstractAppState implements ActionListener {
         } else if (name.equals("Jump")) {
             player.getControl().jump();
         }
+        else if (name.equals("ShiftUp")) {
+            if (isPressed) {
+                shiftUp = true;
+            }
+        } else if (name.equals("ShiftDown")) {
+            if (isPressed) {
+                shiftDown = true;
+            }
+        }
    }
     
     @Override
@@ -218,11 +232,26 @@ class Game extends AbstractAppState implements ActionListener {
         }
         player.getControl().setWalkDirection(walkDirection);
         main.getCamera().setLocation(player.getWorldTranslation().add(0, 3, 0));
+        if(shiftUp)                            //Here
+        {   
+            shiftUp = false;
+            level.moveSurfaceUp();
+            
+        }
         
+        //shift down
+        if(shiftDown)
+        {
+            shiftDown = false;
+            level.moveSurfaceDown();
+            
+        }
         // end game
         if (goalReached) {
-            main.getGuiNode().attachChild(completeText);
+            goalReached = false;
+            level.nextLevel();
         }
+        
     }
 
    /**
@@ -235,63 +264,6 @@ class Game extends AbstractAppState implements ActionListener {
         geomBall = new Geometry("Ball", ball);
         geomBall.setMaterial(main.gold);
         main.getRootNode().attachChild(geomBall);
-        
-        // create hoop
-        Cylinder hoop = new Cylinder(30, 30, 1.5f, 0.1f, true);
-        geomHoop = new Geometry("Hoop", hoop);
-        geomHoop.setMaterial(main.magenta);
-        geomHoop.setLocalTranslation(-11.0f, 5.0f, 0.0f);
-        geomHoop.rotate(0.0f, 90.0f * FastMath.DEG_TO_RAD, 0.0f);
-        main.getRootNode().attachChild(geomHoop);
-        
-        // create high gravity switch
-        geomHighGravSwitch = new Geometry("HighGravSwitch", hoop);
-        geomHighGravSwitch.setMaterial(main.gold);
-        geomHighGravSwitch.setLocalTranslation(0.0f, 5.0f, -11.0f);
-        main.getRootNode().attachChild(geomHighGravSwitch);
-        
-        // create low gravity switch
-        geomLowGravSwitch = new Geometry("LowGravSwitch", hoop);
-        geomLowGravSwitch.setMaterial(main.red);
-        geomLowGravSwitch.setLocalTranslation(5.0f, 5.0f, -11.0f);
-        main.getRootNode().attachChild(geomLowGravSwitch);
-        
-        // create normal gravity switch
-        geomNormGravSwitch = new Geometry("NormGravSwitch", hoop);
-        geomNormGravSwitch.setMaterial(main.green);
-        geomNormGravSwitch.setLocalTranslation(10.0f, 5.0f, -11.0f);
-        main.getRootNode().attachChild(geomNormGravSwitch);
-        
-        // create reverse gravity switch
-        geomRevGravSwitch = new Geometry("RevGravSwitch", hoop);
-        geomRevGravSwitch.setMaterial(main.white);
-        geomRevGravSwitch.setLocalTranslation(15.0f, 5.0f, -11.0f);
-        main.getRootNode().attachChild(geomRevGravSwitch);
-        
-        // create glass box that acts as a ceiling
-        geomGlassBox = new Geometry("GlassCeiling", new Box(90.0f,.2f,85.0f));
-        Material glassMat = new Material(main.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
-        glassMat.setTexture("ColorMap", main.getAssetManager().loadTexture("Materials/glass.png"));
-        glassMat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
-        geomGlassBox.setQueueBucket(RenderQueue.Bucket.Transparent);
-        geomGlassBox.setLocalTranslation(new Vector3f(-10.0f,70.0f,10.0f));
-        geomGlassBox.setMaterial(glassMat);
-        main.getRootNode().attachChild(geomGlassBox);
-        
-        // create a block of lava over under the hole in the floor
-        geomLavaBox = new Geometry("Lava", new Box(14,25,14));
-        Material lavaMat = new Material(main.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
-        lavaMat.setTexture("ColorMap", main.getAssetManager().loadTexture("Materials/lava.jpg"));
-        geomLavaBox.setMaterial(lavaMat);
-        geomLavaBox.setLocalTranslation(new Vector3f(-88.0f, -25.0f,77.0f));
-        main.getRootNode().attachChild(geomLavaBox);
-        
-        // create normal gravity switch on ceiling in order to drop back down
-        geomNormCeilingGravSwitch = new Geometry("NormGravSwitch", hoop);
-        geomNormCeilingGravSwitch.setMaterial(main.green);
-        geomNormCeilingGravSwitch.setLocalTranslation(10.0f, 67.0f, -11.0f);
-        main.getRootNode().attachChild(geomNormCeilingGravSwitch);
-        
     }
 
    /**
@@ -321,46 +293,6 @@ class Game extends AbstractAppState implements ActionListener {
         geomBall.addControl(ballPhys);
         bulletAppState.getPhysicsSpace().add(ballPhys);
         
-        // set hoop physics
-        RigidBodyControl hoopPhys = new RigidBodyControl(0.0f);
-        geomHoop.addControl(hoopPhys);
-        bulletAppState.getPhysicsSpace().add(hoopPhys);
-        
-        // set high gravity switch physics
-        RigidBodyControl highGravSwitchPhys = new RigidBodyControl(0.0f);
-        geomHighGravSwitch.addControl(highGravSwitchPhys);
-        bulletAppState.getPhysicsSpace().add(highGravSwitchPhys);
-        
-        // set low gravity switch physics
-        RigidBodyControl lowGravSwitchPhys = new RigidBodyControl(0.0f);
-        geomLowGravSwitch.addControl(lowGravSwitchPhys);
-        bulletAppState.getPhysicsSpace().add(lowGravSwitchPhys);
-        
-        // set normal gravity switch physics
-        RigidBodyControl normGravSwitchPhys = new RigidBodyControl(0.0f);
-        geomNormGravSwitch.addControl(normGravSwitchPhys);
-        bulletAppState.getPhysicsSpace().add(normGravSwitchPhys);
-        
-        // set reverse gravity switch physics
-        RigidBodyControl revGravSwitchPhys = new RigidBodyControl(0.0f);
-        geomRevGravSwitch.addControl(revGravSwitchPhys);
-        bulletAppState.getPhysicsSpace().add(revGravSwitchPhys);
-        
-        // make glass solid
-        RigidBodyControl glassCeiling = new RigidBodyControl(0.0f);
-        geomGlassBox.addControl(glassCeiling);
-        bulletAppState.getPhysicsSpace().add(glassCeiling);
-        
-        // set normal gravity switch physics on the ceiling
-        RigidBodyControl normCeilingGravSwitchPhys = new RigidBodyControl(0.0f);
-        geomNormCeilingGravSwitch.addControl(normCeilingGravSwitchPhys);
-        bulletAppState.getPhysicsSpace().add(normCeilingGravSwitchPhys);
-        
-        // set lava box physics
-        RigidBodyControl lavaPhys = new RigidBodyControl(0.0f);
-        geomLavaBox.addControl(lavaPhys);
-        bulletAppState.getPhysicsSpace().add(geomLavaBox);
-        
         // set collision control
         collCon = new CollisionControl(this);
         bulletAppState.getPhysicsSpace().addCollisionListener(collCon);
@@ -389,6 +321,8 @@ class Game extends AbstractAppState implements ActionListener {
     */
     public void goalReached() {
         goalReached = true;
+        ballPhys.clearForces();
+        ballPhys.setPhysicsLocation(new Vector3f(1000.0f, 1000.0f, 1000.0f));
     }
     
    /**
@@ -434,5 +368,9 @@ class Game extends AbstractAppState implements ActionListener {
         ballPhys.setAngularVelocity(Vector3f.ZERO);
         // reset normal gravity
         bulletAppState.getPhysicsSpace().setGravity(new Vector3f(0, -9.81f, 0));
+    }
+    
+    public void resetCount(){
+        count = 0;
     }
 }

@@ -51,7 +51,7 @@ public class CollisionControl extends RigidBodyControl implements PhysicsCollisi
         if (event.getNodeA().getName().equals("Ball") || event.getNodeB().getName().equals("Ball")) {
             // finish hoop
             if (event.getNodeA().getName().equals("Hoop") || event.getNodeB().getName().equals("Hoop")) {
-                game.goalReached();
+                    game.goalReached();   
             }
             
             // high gravity switch
