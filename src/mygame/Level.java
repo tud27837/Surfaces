@@ -58,6 +58,16 @@ public class Level {
                 game.getBall().setPhysicsLocation(ballStartPos);
                 createHoop(40.0f, 13.0f, -15.0f, 90.0f);
                 break;
+            case 2:
+                model = game.getMain().getAssetManager().loadModel("Scenes/Level2.mesh.xml");
+                playerStartPos = new Vector3f(0.0f, 10.0f, 40.0f);
+                game.getPlayer().setStart(playerStartPos);
+                ballStartPos = new Vector3f(0.0f, 5.0f, 30.0f);
+                game.getBall().setPhysicsLocation(ballStartPos);
+                createHoop(0.0f, 2.0f, -50.0f, 0.0f);
+                createGlassBlock(1.0f, 0.2f, 16.2f, 0.0f, 0.5f, 0.0f);
+                createLavaBlock(7.5f, 1.0f, 16.2f, 0.0f, -1.0f, 0.0f);
+                break;
             default:
                 //test level
                 model = game.getMain().getAssetManager().loadModel("Scenes/TestScene.j3o");
@@ -108,6 +118,8 @@ public class Level {
         }
         physList.clear();
         geomList.clear();
+        game.getBall().setLinearVelocity(Vector3f.ZERO);
+        game.getBall().setAngularVelocity(Vector3f.ZERO);
     }
     
     /*creates a completion hoop at specified coordinates
