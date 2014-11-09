@@ -29,13 +29,21 @@ public class Level {
     private Spatial model;
     private int levelNum;
     private int listIndex = 0;
+    private int upDownIndex = 0;
+    private int upIndex = 0;
+    private int downIndex = 0;
     private Node nodeUp, nodeDown, nodeUpDown;
-    private Surface upDownBlock;
     private Vector3f playerStartPos, ballStartPos;
-    private Geometry geomHoop, geomHighGravSwitch, geomLowGravSwitch, geomNormGravSwitch, geomRevGravSwitch, geomGlassBox, geomLavaBox, geomSurfUp, geomSurfDown;
-    private RigidBodyControl landscape, hoopPhys, highGravSwitchPhys, lowGravSwitchPhys, normGravSwitchPhys, revGravSwitchPhys, glassPhys, lavaPhys, surfPhysics;
+    private Geometry geom;
+    private RigidBodyControl landscape, phys, upDownPhys, upPhys, downPhys;
     private final Cylinder hoop = new Cylinder(30, 30, 1.5f, 0.1f, true);
+    private ArrayList<Vector3f> upDownPositionList = new ArrayList<Vector3f>();
+    private ArrayList<Vector3f> upPositionList = new ArrayList<Vector3f>();
+    private ArrayList<Vector3f> downPositionList = new ArrayList<Vector3f>();
     private ArrayList<RigidBodyControl> physList = new ArrayList<RigidBodyControl>();
+    private ArrayList<RigidBodyControl> upDownPhysList = new ArrayList<RigidBodyControl>();
+    private ArrayList<RigidBodyControl> upPhysList = new ArrayList<RigidBodyControl>();
+    private ArrayList<RigidBodyControl> downPhysList = new ArrayList<RigidBodyControl>();
     private ArrayList<Geometry> geomList = new ArrayList<Geometry>();
     
     public Level(Game game) {
@@ -43,6 +51,9 @@ public class Level {
         nodeUp = new Node();
         nodeDown = new Node();
         nodeUpDown = new Node();
+        game.getMain().getRootNode().attachChild(nodeUp);
+        game.getMain().getRootNode().attachChild(nodeDown);
+        game.getMain().getRootNode().attachChild(nodeUpDown);
         levelNum = 1;
         loadLevel();
     }
@@ -52,11 +63,23 @@ public class Level {
             case 1:
                 //Level 1
                 model = game.getMain().getAssetManager().loadModel("Scenes/LevelOne.j3o");
-                playerStartPos = new Vector3f(10, 5, -10);
+                playerStartPos = new Vector3f(20, 3, -35);
                 game.getPlayer().setStart(playerStartPos);
-                ballStartPos = new Vector3f(35.0f, 15.0f, -20.0f);
+                ballStartPos = new Vector3f(50.0f, 13.0f, -15.0f);
                 game.getBall().setPhysicsLocation(ballStartPos);
-                createHoop(40.0f, 13.0f, -15.0f, 90.0f);
+                createHoop(89.0f, 13.0f, -65.0f, 0.0f);
+                createDownBlock(15.0f, 16.0f, 15.0f, 17.0f, -5.0f, -10.0f);
+                break;
+            case 2:
+                //Level 2
+                model = game.getMain().getAssetManager().loadModel("Scenes/Level2.mesh.xml");
+                playerStartPos = new Vector3f(0.0f, 10.0f, 40.0f);
+                game.getPlayer().setStart(playerStartPos);
+                ballStartPos = new Vector3f(0.0f, 5.0f, 30.0f);
+                game.getBall().setPhysicsLocation(ballStartPos);
+                createHoop(0.0f, 2.0f, -50.0f, 0.0f);
+                createGlassBlock(1.0f, 0.2f, 16.2f, 0.0f, 0.5f, 0.0f);
+                createLavaBlock(7.5f, 1.0f, 16.2f, 0.0f, -1.0f, 0.0f);
                 break;
             default:
                 //test level
@@ -65,17 +88,20 @@ public class Level {
                 game.getPlayer().setStart(playerStartPos);
                 ballStartPos = new Vector3f(0, 5, 10);
                 game.getBall().setPhysicsLocation(ballStartPos);
-                //createHoop(0.0f, 5.0f, 0.0f, 0.0f);
+                createHoop(0.0f, 5.0f, 0.0f, 0.0f);
                 createNormGravSwitch(15.0f, 5.0f, 0.0f, 0.0f);
                 createNormGravSwitch(15.0f, 60.0f, 0.0f, 0.0f);
                 createHighGravSwitch(5.0f, 5.0f, 0.0f, 0.0f);
                 createLowGravSwitch(10.0f, 5.0f, 0.0f, 0.0f);
                 createRevGravSwitch(20.0f, 5.0f, 0.0f, 0.0f);
                 createGlassBlock(100.0f, 0.3f, 100.0f, 0.0f, 65.0f, 0.0f);
-                createLavaBlock(20.0f, 10.0f, 20.0f, -80.0f, -7.0f, 75.0f);
-                createUpDownBlock();
-                //createUpBlock();
-                //createDownBlock();
+                createLavaBlock(25.0f, 10.0f, 25.0f, -80.0f, -7.0f, 75.0f);
+                createDownBlock(5f, .5f, 10f, -20.0f, 20.0f, -20.0f);
+                createDownBlock(5f, .5f, 10f, -5.0f, 20.0f, -20.0f);
+                createUpDownBlock(5f, .5f, 10f, 10.0f, 5.0f, -20.0f);
+                createUpDownBlock(5f, .5f, 10f, 25.0f, 5.0f, -20.0f);
+                createUpBlock(5f, .5f, 10f, 40.0f, 5.0f, -20.0f);
+                createUpBlock(5f, .5f, 10f, 55.0f, 5.0f, -20.0f);
                 break;
         }
         model.setName("Level");
@@ -88,9 +114,13 @@ public class Level {
     }
     
     public void nextLevel() {
-        
         clearLevel();
         ++levelNum;
+        loadLevel();
+    }
+    
+    public void resetLevel(){
+        clearLevel();
         loadLevel();
     }
     
@@ -101,153 +131,216 @@ public class Level {
             game.getMain().getRootNode().detachChild(model);
             game.getBulletAppState().getPhysicsSpace().removeCollisionObject(landscape);
         }
-        while(listIndex > 0){
-            listIndex--;
-            game.getMain().getRootNode().detachChild(geomList.get(listIndex));
-            game.getBulletAppState().getPhysicsSpace().removeCollisionObject(physList.get(listIndex));   
-        }
-        physList.clear();
-        geomList.clear();
+        clearMovableSurfaces();
+        clearLists();
     }
     
     /*creates a completion hoop at specified coordinates
      For the rotation field just fill in 90.0f or 0.0.f, one makes the hoop face north/south the other east/west*/
     public void createHoop(float x, float y, float z, float rotation){
         listIndex++;
-        geomList.add(geomHoop = new Geometry("Hoop", hoop));
-        geomHoop.setMaterial(game.getMain().magenta);
-        geomHoop.setLocalTranslation(x, y, z);
-        geomHoop.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
-        game.getMain().getRootNode().attachChild(geomHoop);
-        physList.add(hoopPhys = new RigidBodyControl(0.0f));
-        geomHoop.addControl(hoopPhys);
-        game.getBulletAppState().getPhysicsSpace().add(hoopPhys);
+        geomList.add(geom = new Geometry("Hoop", hoop));
+        geom.setMaterial(game.getMain().magenta);
+        geom.setLocalTranslation(x, y, z);
+        geom.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
+        game.getMain().getRootNode().attachChild(geom);
+        physList.add(phys = new RigidBodyControl(0.0f));
+        geom.addControl(phys);
+        game.getBulletAppState().getPhysicsSpace().add(phys);
     }
     
     //creates a high gravity switch at specified coordinates
     public void createHighGravSwitch(float x, float y, float z, float rotation){
         listIndex++;
-        geomList.add(geomHighGravSwitch = new Geometry("HighGravSwitch", hoop));
-        geomHighGravSwitch.setMaterial(game.getMain().yellow);
-        geomHighGravSwitch.setLocalTranslation(x, y, z);
-        geomHighGravSwitch.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
-        game.getMain().getRootNode().attachChild(geomHighGravSwitch);
-        physList.add(highGravSwitchPhys = new RigidBodyControl(0.0f));
-        geomHighGravSwitch.addControl(highGravSwitchPhys);
-        game.getBulletAppState().getPhysicsSpace().add(highGravSwitchPhys);
+        geomList.add(geom = new Geometry("HighGravSwitch", hoop));
+        geom.setMaterial(game.getMain().yellow);
+        geom.setLocalTranslation(x, y, z);
+        geom.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
+        game.getMain().getRootNode().attachChild(geom);
+        physList.add(phys = new RigidBodyControl(0.0f));
+        geom.addControl(phys);
+        game.getBulletAppState().getPhysicsSpace().add(phys);
     }
     
     //creates a low gravity switch at specified coordinates
     public void createLowGravSwitch(float x, float y, float z, float rotation){
         listIndex++;
-        geomList.add(geomLowGravSwitch = new Geometry("LowGravSwitch", hoop));
-        geomLowGravSwitch.setMaterial(game.getMain().red);
-        geomLowGravSwitch.setLocalTranslation(x, y, z);
-        geomLowGravSwitch.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
-        game.getMain().getRootNode().attachChild(geomLowGravSwitch);
-        physList.add(lowGravSwitchPhys = new RigidBodyControl(0.0f));
-        geomLowGravSwitch.addControl(lowGravSwitchPhys);
-        game.getBulletAppState().getPhysicsSpace().add(lowGravSwitchPhys);
+        geomList.add(geom = new Geometry("LowGravSwitch", hoop));
+        geom.setMaterial(game.getMain().red);
+        geom.setLocalTranslation(x, y, z);
+        geom.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
+        game.getMain().getRootNode().attachChild(geom);
+        physList.add(phys = new RigidBodyControl(0.0f));
+        geom.addControl(phys);
+        game.getBulletAppState().getPhysicsSpace().add(phys);
     }
     
     //creates a normal gravity switch at specified coordinates
     public void createNormGravSwitch(float x, float y, float z, float rotation){
         listIndex++;
-        geomList.add(geomNormGravSwitch = new Geometry("NormGravSwitch", hoop));
-        geomNormGravSwitch.setMaterial(game.getMain().green);
-        geomNormGravSwitch.setLocalTranslation(x, y, z);
-        geomNormGravSwitch.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
-        game.getMain().getRootNode().attachChild(geomNormGravSwitch);
-        physList.add(normGravSwitchPhys = new RigidBodyControl(0.0f));
-        geomNormGravSwitch.addControl(normGravSwitchPhys);
-        game.getBulletAppState().getPhysicsSpace().add(normGravSwitchPhys);
+        geomList.add(geom = new Geometry("NormGravSwitch", hoop));
+        geom.setMaterial(game.getMain().green);
+        geom.setLocalTranslation(x, y, z);
+        geom.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
+        game.getMain().getRootNode().attachChild(geom);
+        physList.add(phys = new RigidBodyControl(0.0f));
+        geom.addControl(phys);
+        game.getBulletAppState().getPhysicsSpace().add(phys);
     }
     
     //creates a reverse gravity switch at specified coordinates
     public void createRevGravSwitch(float x, float y, float z, float rotation){
         listIndex++;
-        geomList.add(geomRevGravSwitch = new Geometry("RevGravSwitch", hoop));
-        geomRevGravSwitch.setMaterial(game.getMain().white);
-        geomRevGravSwitch.setLocalTranslation(x, y, z);
-        geomRevGravSwitch.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
-        game.getMain().getRootNode().attachChild(geomRevGravSwitch);
-        physList.add(revGravSwitchPhys = new RigidBodyControl(0.0f));
-        geomRevGravSwitch.addControl(revGravSwitchPhys);
-        game.getBulletAppState().getPhysicsSpace().add(revGravSwitchPhys);
+        geomList.add(geom = new Geometry("RevGravSwitch", hoop));
+        geom.setMaterial(game.getMain().white);
+        geom.setLocalTranslation(x, y, z);
+        geom.rotate(0.0f, rotation * FastMath.DEG_TO_RAD, 0.0f);
+        game.getMain().getRootNode().attachChild(geom);
+        physList.add(phys = new RigidBodyControl(0.0f));
+        geom.addControl(phys);
+        game.getBulletAppState().getPhysicsSpace().add(phys);
     }
     
     //creates a glass block at specified coordinates
     public void createGlassBlock(float l, float h, float w, float x, float y, float z){
         listIndex++;
-        geomList.add(geomGlassBox = new Geometry("GlassCeiling", new Box(l, h, w)));
+        geomList.add(geom = new Geometry("GlassCeiling", new Box(l, h, w)));
         Material glassMat = new Material(game.getMain().getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
         glassMat.setTexture("ColorMap", game.getMain().getAssetManager().loadTexture("Materials/glass.png"));
         glassMat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
-        geomGlassBox.setQueueBucket(RenderQueue.Bucket.Transparent);
-        geomGlassBox.setLocalTranslation(new Vector3f(x, y, z));
-        geomGlassBox.setMaterial(glassMat);
-        game.getMain().getRootNode().attachChild(geomGlassBox);
-        physList.add(glassPhys = new RigidBodyControl(0.0f));
-        geomGlassBox.addControl(glassPhys);
-        game.getBulletAppState().getPhysicsSpace().add(glassPhys);
+        geom.setQueueBucket(RenderQueue.Bucket.Transparent);
+        geom.setLocalTranslation(new Vector3f(x, y, z));
+        geom.setMaterial(glassMat);
+        game.getMain().getRootNode().attachChild(geom);
+        physList.add(phys = new RigidBodyControl(0.0f));
+        geom.addControl(phys);
+        game.getBulletAppState().getPhysicsSpace().add(phys);
     }
     
     //creates a lava block at specified coordinates
     public void createLavaBlock(float l, float h, float w, float x, float y, float z){
         listIndex++;
-        geomList.add(geomLavaBox = new Geometry("Lava", new Box(l, h, w)));
+        geomList.add(geom = new Geometry("Lava", new Box(l, h, w)));
         Material lavaMat = new Material(game.getMain().getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
         lavaMat.setTexture("ColorMap", game.getMain().getAssetManager().loadTexture("Materials/lava.jpg"));
-        geomLavaBox.setMaterial(lavaMat);
-        geomLavaBox.setLocalTranslation(new Vector3f(x, y, z));
-        game.getMain().getRootNode().attachChild(geomLavaBox);
-        physList.add(lavaPhys = new RigidBodyControl(0.0f));
-        geomLavaBox.addControl(lavaPhys);
-        game.getBulletAppState().getPhysicsSpace().add(geomLavaBox);
+        geom.setMaterial(lavaMat);
+        geom.setLocalTranslation(new Vector3f(x, y, z));
+        game.getMain().getRootNode().attachChild(geom);
+        physList.add(phys = new RigidBodyControl(0.0f));
+        geom.addControl(phys);
+        game.getBulletAppState().getPhysicsSpace().add(phys);
     }
     
-    public void createUpDownBlock(){
-        upDownBlock = new Surface(game);
-        upDownBlock.setLocalTranslation(new Vector3f(-15f,12f,69f));
-        game.getMain().getRootNode().attachChild(upDownBlock);
-        CollisionShape surfaceShape =
-            CollisionShapeFactory.createMeshShape((Node) upDownBlock);
-        surfPhysics = new RigidBodyControl(surfaceShape, 0);
-        upDownBlock.addControl(surfPhysics);
-        game.getBulletAppState().getPhysicsSpace().add(surfPhysics);
+    public void createUpDownBlock(float l, float h, float w, float x, float y, float z){
+        Vector3f currentUpDownPosition;
+        upDownIndex++;
+        geom = new Geometry("SurfUpDown", new Box(l, h, w));
+        geom.setMaterial(game.getMain().white);
+        upDownPositionList.add(currentUpDownPosition = new Vector3f(x, y, z));
+        geom.setLocalTranslation(currentUpDownPosition);
+        nodeUpDown.attachChild(geom);
+        upDownPhysList.add(upDownPhys = new RigidBodyControl(0.0f));
+        geom.addControl(upDownPhys);
+        game.getBulletAppState().getPhysicsSpace().add(upDownPhys);
+    }
+    
+    public void createUpBlock(float l, float h, float w, float x, float y, float z){
+        Vector3f currentUpPosition;
+        upIndex++;
+        geom = new Geometry("SurfUp", new Box(l, h, w));
+        geom.setMaterial(game.getMain().red);
+        upPositionList.add(currentUpPosition = new Vector3f(x, y, z));
+        geom.setLocalTranslation(currentUpPosition);
+        nodeUp.attachChild(geom);
+        upPhysList.add(upPhys = new RigidBodyControl(0.0f));
+        geom.addControl(upPhys);
+        game.getBulletAppState().getPhysicsSpace().add(upPhys);
+    }
+    
+    public void createDownBlock(float l, float h, float w, float x, float y, float z){
+        Vector3f currentDownPosition;
+        downIndex++;
+        geom = new Geometry("SurfDown",new Box(l, h, w));
+        geom.setMaterial(game.getMain().yellow);
+        downPositionList.add(currentDownPosition = new Vector3f(x, y, z));
+        geom.setLocalTranslation(currentDownPosition);
+        nodeDown.attachChild(geom);
+        downPhysList.add(downPhys = new RigidBodyControl(0.0f));
+        geom.addControl(downPhys);
+        game.getBulletAppState().getPhysicsSpace().add(downPhys);
     }
     
     public void moveSurfaceUp(){
-        upDownBlock.move(0f, 1f, 0f);
-        surfPhysics.setPhysicsLocation(new Vector3f(-15f,13f,69f));
+        if(!upDownPositionList.isEmpty()){
+            nodeUpDown.move(0f, .5f, 0f);
+            for(int i = 0; i < upDownIndex; i++){
+                upDownPositionList.get(i).setY(upDownPositionList.get(i).getY() + 0.5f);
+                upDownPhysList.get(i).setPhysicsLocation(upDownPositionList.get(i));
+            }
+        }
+        if(!upPositionList.isEmpty()){
+            nodeUp.move(0f, .5f, 0f);
+            for(int i = 0; i < upIndex; i++){
+                upPositionList.get(i).setY(upPositionList.get(i).getY() + 0.5f);
+                upPhysList.get(i).setPhysicsLocation(upPositionList.get(i));
+            }
+        }
     }
     
     public void moveSurfaceDown(){
-        upDownBlock.move(0f, -1f, 0f);
-        surfPhysics.setPhysicsLocation(new Vector3f(-15f,12f,69f));
+        if(!upDownPositionList.isEmpty()){
+            nodeUpDown.move(0f, -.5f, 0f);
+            for(int i = 0; i < upDownIndex; i++){
+                upDownPositionList.get(i).setY((upDownPositionList.get(i).getY() - 0.5f));
+                upDownPhysList.get(i).setPhysicsLocation(upDownPositionList.get(i));
+            }
+        }
+        if(!downPositionList.isEmpty()){
+            nodeDown.move(0f, -.5f, 0f);
+            for(int i = 0; i < downIndex; i++){
+                downPositionList.get(i).setY((downPositionList.get(i).getY() - 0.5f));
+                downPhysList.get(i).setPhysicsLocation(downPositionList.get(i));
+            }
+        }
     }
-    //still in development don't use
-    /*public void createUpBlock(float l, float h, float w, float x, float y, float z){
-        geomSurfUp = new Geometry("SurfUp", new Box(5f, .1f, 2f));
-        geomSurfUp.setMaterial(game.getMain().white);
-        geomSurfUp.setLocalTranslation(new Vector3f(-15f,12f,69f));
-        surfUp.attachChild(geomSurfUp);
-        RigidBodyControl surfUpPhysics = new RigidBodyControl(0.0f);
-        geomSurfUp.addControl(surfUpPhysics);
-        game.getBulletAppState().getPhysicsSpace().add(surfUpPhysics);
-    }*/
     
-    //still in development don't use
-    /*public void createDownBlock(float l, float h, float w, float x, float y, float z){
-        geomSurfDown = new Geometry("SurfDown",new Box(5f, .1f, 2f));
-        geomSurfDown.setMaterial(game.getMain().white);
-        geomSurfDown.setLocalTranslation(new Vector3f(-15f,12f,69f));
-        surfDown.attachChild(geomSurfDown);
-        RigidBodyControl surfDownPhysics = new RigidBodyControl(0f);
-        geomSurfDown.addControl(surfDownPhysics);
-        game.getBulletAppState().getPhysicsSpace().add(surfDownPhysics);
-    }*/
+    public void clearMovableSurfaces(){
+        nodeUpDown.detachAllChildren();
+        nodeUp.detachAllChildren();
+        nodeDown.detachAllChildren();
+        nodeUpDown.setLocalTranslation(0f, 0f, 0f);
+        nodeUp.setLocalTranslation(0f, 0f, 0f);
+        nodeDown.setLocalTranslation(0f, 0f, 0f);
+        while(upDownIndex > 0){
+            upDownIndex--;
+            game.getBulletAppState().getPhysicsSpace().removeCollisionObject(upDownPhysList.get(upDownIndex));
+        }
+        while(upIndex > 0){
+            upIndex--;
+            game.getBulletAppState().getPhysicsSpace().removeCollisionObject(upPhysList.get(upIndex));
+        }
+        while(downIndex > 0){
+            downIndex--;
+            game.getBulletAppState().getPhysicsSpace().removeCollisionObject(downPhysList.get(downIndex));
+        }
+        while(listIndex > 0){
+            listIndex--;
+            game.getMain().getRootNode().detachChild(geomList.get(listIndex));
+            game.getBulletAppState().getPhysicsSpace().removeCollisionObject(physList.get(listIndex));   
+        }
+    }
     
+    public void clearLists(){
+        upDownPositionList.clear();
+        upPositionList.clear();
+        downPositionList.clear();
+        physList.clear();
+        upDownPhysList.clear();
+        upPhysList.clear();
+        downPhysList.clear();
+        geomList.clear();
+    }
+
     public Spatial getModel() {
         return model;
     }
@@ -258,13 +351,5 @@ public class Level {
     
     public Vector3f getBallStart() {
         return ballStartPos;
-    }
-    
-    public Node getUpDownNode(){
-        return upDownBlock;
-    }
-    
-    public Geometry getUpGeom(){
-        return geomSurfUp;
     }
 }

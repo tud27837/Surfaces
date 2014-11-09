@@ -4,11 +4,10 @@
  */
 package mygame;
 
-import com.jme3.bullet.control.RigidBodyControl;
-import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
+import java.util.ArrayList;
 
 /**
  *
@@ -16,12 +15,13 @@ import com.jme3.scene.shape.Box;
  */
 public class Surface extends Node {
 
-    public Surface(Game game) {
-        this.setName("Surface");
-        Geometry geomSurfUp = new Geometry("SurfUp", new Box(5f, .5f, 2f));
-        geomSurfUp.setMaterial(game.getMain().white);
-        this.attachChild(geomSurfUp);
-    }
+    private Geometry geomSurfUpDown;
     
+    public Surface(Game game, float l, float w, float h) {
+        this.setName("Surface");
+        geomSurfUpDown = new Geometry("SurfUpDown", new Box(l, h, w));
+        geomSurfUpDown.setMaterial(game.getMain().white);
+        this.attachChild(geomSurfUpDown);
+    }
     
 }

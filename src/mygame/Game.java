@@ -22,6 +22,7 @@ import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
@@ -69,19 +70,11 @@ class Game extends AbstractAppState implements ActionListener {
    /**
     * Geometries for all
     */
-    private Geometry geomBall, geomHoop, geomHighGravSwitch, geomLowGravSwitch, geomNormGravSwitch, geomRevGravSwitch, geomGlassBox, geomNormCeilingGravSwitch, geomLavaBox;
-   /**
-    * GhostControl to detect collisions with the lava block
-    */
-    private GhostControl lavaGhost;
+    private Geometry geomBall;
    /**
     * physics of the ball Geometry
     */
     private RigidBodyControl ballPhys;
-   /**
-    * Node for the lava block
-    */
-    private Node lavaNode;
    /**
     * text object for the display of text when the level is complete
     */
@@ -107,10 +100,6 @@ class Game extends AbstractAppState implements ActionListener {
     * the current state
     */
     private int state;
-    /*
-     *counter variable to only call level.nextLevel once
-     */
-    private int count = 0;
    /**
     * waiting for the game to start
     */
@@ -232,7 +221,7 @@ class Game extends AbstractAppState implements ActionListener {
         }
         player.getControl().setWalkDirection(walkDirection);
         main.getCamera().setLocation(player.getWorldTranslation().add(0, 3, 0));
-        if(shiftUp)                            //Here
+        if(shiftUp)
         {   
             shiftUp = false;
             level.moveSurfaceUp();
@@ -299,15 +288,6 @@ class Game extends AbstractAppState implements ActionListener {
     }
     
    /**
-    * Returns the GhostControl object for the lava block.
-    * 
-    * @return the GhostControl object for the lava block
-    */
-    public GhostControl getLavaGhost(){
-        return lavaGhost;
-    }
-    
-   /**
     * Returns true if the goal is reached, false if it is not.
     * 
     * @return boolean for whether or not the goal has been reached
@@ -321,7 +301,7 @@ class Game extends AbstractAppState implements ActionListener {
     */
     public void goalReached() {
         goalReached = true;
-        ballPhys.clearForces();
+        ballPhys.setPhysicsRotation(Quaternion.ZERO);
         ballPhys.setPhysicsLocation(new Vector3f(1000.0f, 1000.0f, 1000.0f));
     }
     
@@ -368,9 +348,6 @@ class Game extends AbstractAppState implements ActionListener {
         ballPhys.setAngularVelocity(Vector3f.ZERO);
         // reset normal gravity
         bulletAppState.getPhysicsSpace().setGravity(new Vector3f(0, -9.81f, 0));
-    }
-    
-    public void resetCount(){
-        count = 0;
+        level.resetLevel();
     }
 }
