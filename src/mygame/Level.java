@@ -68,8 +68,7 @@ public class Level {
                 ballStartPos = new Vector3f(50.0f, 13.0f, -15.0f);
                 game.getBall().setPhysicsLocation(ballStartPos);
                 createHoop(89.0f, 13.0f, -65.0f, 0.0f);
-                createDownBlock(15.0f, 16.0f, 15.0f, 17.0f, -5.0f, -10.0f);
-                break;
+                createDownBlock(15.0f, 16.0f, 15.0f, 17.0f, -5.0f, -10.0f);                 
             case 2:
                 //Level 2
                 model = game.getMain().getAssetManager().loadModel("Scenes/Level2.mesh.xml");
@@ -80,6 +79,17 @@ public class Level {
                 createHoop(0.0f, 2.0f, -50.0f, 0.0f);
                 createGlassBlock(1.0f, 0.2f, 16.2f, 0.0f, 0.5f, 0.0f);
                 createLavaBlock(7.5f, 1.0f, 16.2f, 0.0f, -1.0f, 0.0f);
+                break;
+            case 3:
+                //Level 3
+                model = game.getMain().getAssetManager().loadModel("Scenes/Level3.mesh.xml");
+                playerStartPos = new Vector3f(0, 0, 0);
+                game.getPlayer().setStart(playerStartPos);
+                ballStartPos = new Vector3f(0f, 10f, -115f);
+                game.getBall().setPhysicsLocation(ballStartPos);
+                createRevGravSwitch(0f, 5f, -126f, 0f);
+                createNormGravSwitch(0f, 110f, -238f, 0f);
+                createHoop(0f, -4f, -248f, 0f);
                 break;
             default:
                 //test level

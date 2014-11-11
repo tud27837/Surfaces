@@ -275,7 +275,7 @@ class Game extends AbstractAppState implements ActionListener {
     public void initPhysics() {
         bulletAppState = new BulletAppState();
         asm.attach(bulletAppState);
-        bulletAppState.setDebugEnabled(true);
+        //bulletAppState.setDebugEnabled(true);
         
         // set ball physics
         ballPhys = new RigidBodyControl(1.0f);
